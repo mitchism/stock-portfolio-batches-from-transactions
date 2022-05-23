@@ -15,6 +15,7 @@ def read_transactions(name='transactions'):
         
         # Reset index, remove duplicate index if one is made
         df.reset_index(inplace=True)
+        df.sort_values(by=['symbol', 'index'],inplace=True)
         df.drop(['index'], axis=1, inplace=True)
         
     except ValueError:
@@ -29,6 +30,7 @@ def read_transactions(name='transactions'):
         df.drop('transaction date', axis=1, inplace=True)
         # Reset index, remove duplicate index if one is made
         df.reset_index(inplace=True)
+        df.sort_values(by=['symbol', 'index'],inplace=True)
         df.drop(['index'], axis=1, inplace=True)
         
     else:
@@ -40,7 +42,7 @@ def batch_calculations(x):
     index_dict = {}
 
     # next, we will create a log of former batches before overwriting latest batch in index_dict
-    #former_batches = {}
+    closed_batches = {}
 
     for i in range(0,len(ledger)):
 
@@ -100,8 +102,9 @@ def batch_calculations(x):
             ledger[i]['CB_batch'] = cost_basis
             ledger[i]['CB_effective'] = cost_basis
             ledger[i]['SB_avg'] = 0
-            ledger[i]['p&l_batch'] = 0
-            ledger[i]['p&l_ticker'] = 0
+            ledger[i]['p&l_batch'] = index_dict[symbol]['p&l_batch']
+            ledger[i]['p&l ticker'] = index_dict[symbol]['p&l_ticker']
+            ledger[i]['p&l_line'] = 0
 
 
 
@@ -131,15 +134,15 @@ def batch_calculations(x):
                 #update ledger
                 ledger[i]['current_status']     = index_dict[symbol]['current_status']
                 ledger[i]['batch_number']       = index_dict[symbol]['batch_number']
-                ledger[i]['batch_dateopen'] = index_dict[symbol]['batch_dateopen']
-                ledger[i]['batch_dateclosed'] = index_dict[symbol]['batch_dateclosed']
+                ledger[i]['batch_dateopen']     = index_dict[symbol]['batch_dateopen']
+                ledger[i]['batch_dateclosed']   = index_dict[symbol]['batch_dateclosed']
                 ledger[i]['batch_lot']          = index_dict[symbol]['batch_lot']
                 ledger[i]['qty_buys']           = index_dict[symbol]['qty_buys']
                 ledger[i]['qty_sells']          = index_dict[symbol]['qty_sells']
                 ledger[i]['qty_net']            = index_dict[symbol]['qty_net']
-                ledger[i]['amount_net']         = index_dict[symbol]['amount_net']
-                ledger[i]['amount_sells']       = index_dict[symbol]['amount_sells']
                 ledger[i]['amount_buys']        = index_dict[symbol]['amount_buys']
+                ledger[i]['amount_sells']       = index_dict[symbol]['amount_sells']
+                ledger[i]['amount_net']         = index_dict[symbol]['amount_net']
                 ledger[i]['CB_batch']           = index_dict[symbol]['CB_batch']
                 ledger[i]['CB_effective']       = index_dict[symbol]['CB_effective']
                 ledger[i]['SB_avg']             = index_dict[symbol]['SB_avg']
@@ -175,9 +178,9 @@ def batch_calculations(x):
                 ledger[i]['qty_buys']           = index_dict[symbol]['qty_buys']
                 ledger[i]['qty_sells']          = index_dict[symbol]['qty_sells']
                 ledger[i]['qty_net']            = index_dict[symbol]['qty_net']
-                ledger[i]['amount_net']         = index_dict[symbol]['amount_net']
-                ledger[i]['amount_sells']       = index_dict[symbol]['amount_sells']
                 ledger[i]['amount_buys']        = index_dict[symbol]['amount_buys']
+                ledger[i]['amount_sells']       = index_dict[symbol]['amount_sells']
+                ledger[i]['amount_net']         = index_dict[symbol]['amount_net']
                 ledger[i]['CB_batch']           = index_dict[symbol]['CB_batch']
                 ledger[i]['CB_effective']       = index_dict[symbol]['CB_effective']
                 ledger[i]['SB_avg']             = index_dict[symbol]['SB_avg']
@@ -225,9 +228,9 @@ def batch_calculations(x):
                 ledger[i]['qty_buys']           = index_dict[symbol]['qty_buys']
                 ledger[i]['qty_sells']          = index_dict[symbol]['qty_sells']
                 ledger[i]['qty_net']            = index_dict[symbol]['qty_net']
-                ledger[i]['amount_net']         = index_dict[symbol]['amount_net']
-                ledger[i]['amount_sells']       = index_dict[symbol]['amount_sells']
                 ledger[i]['amount_buys']        = index_dict[symbol]['amount_buys']
+                ledger[i]['amount_sells']       = index_dict[symbol]['amount_sells']
+                ledger[i]['amount_net']         = index_dict[symbol]['amount_net']
                 ledger[i]['CB_batch']           = index_dict[symbol]['CB_batch']
                 ledger[i]['CB_effective']       = index_dict[symbol]['CB_effective']
                 ledger[i]['SB_avg']             = index_dict[symbol]['SB_avg']
@@ -276,15 +279,60 @@ def batch_calculations(x):
                 ledger[i]['qty_buys']           = index_dict[symbol]['qty_buys']
                 ledger[i]['qty_sells']          = index_dict[symbol]['qty_sells']
                 ledger[i]['qty_net']            = index_dict[symbol]['qty_net']
-                ledger[i]['amount_net']         = index_dict[symbol]['amount_net']
-                ledger[i]['amount_sells']       = index_dict[symbol]['amount_sells']
                 ledger[i]['amount_buys']        = index_dict[symbol]['amount_buys']
+                ledger[i]['amount_sells']       = index_dict[symbol]['amount_sells']
+                ledger[i]['amount_net']         = index_dict[symbol]['amount_net']
                 ledger[i]['CB_batch']           = index_dict[symbol]['CB_batch']
                 ledger[i]['CB_effective']       = index_dict[symbol]['CB_effective']
                 ledger[i]['SB_avg']             = index_dict[symbol]['SB_avg']
                 ledger[i]['p&l_batch']          = index_dict[symbol]['p&l_batch']
                 ledger[i]['p&l ticker']         = index_dict[symbol]['p&l_ticker']
                 ledger[i]['p&l_line']           = pnl_line
+
+                #record into closed_batches dict
+                batchnum = str(index_dict[symbol]['batch_number'])
+                '''
+                closed_batches[symbol] = {}
+                closed_batches[symbol][batchnum] = {}
+                closed_batches[symbol][batchnum]['symbol'] = symbol
+                closed_batches[symbol][batchnum]['current_status']     = index_dict[symbol]['current_status']
+                closed_batches[symbol][batchnum]['batch_number']       = index_dict[symbol]['batch_number']
+                closed_batches[symbol][batchnum]['batch_dateopen']     = index_dict[symbol]['batch_dateopen']
+                closed_batches[symbol][batchnum]['batch_dateclosed']   = index_dict[symbol]['batch_dateclosed']
+                closed_batches[symbol][batchnum]['batch_lot']          = index_dict[symbol]['batch_lot']
+                closed_batches[symbol][batchnum]['qty_buys']           = index_dict[symbol]['qty_buys']
+                closed_batches[symbol][batchnum]['qty_sells']          = index_dict[symbol]['qty_sells']
+                closed_batches[symbol][batchnum]['qty_net']            = index_dict[symbol]['qty_net']
+                closed_batches[symbol][batchnum]['amount_buys']        = index_dict[symbol]['amount_buys']
+                closed_batches[symbol][batchnum]['amount_sells']       = index_dict[symbol]['amount_sells']
+                closed_batches[symbol][batchnum]['amount_net']         = index_dict[symbol]['amount_net']
+                closed_batches[symbol][batchnum]['CB_batch']           = index_dict[symbol]['CB_batch']
+                closed_batches[symbol][batchnum]['CB_effective']       = index_dict[symbol]['CB_effective']
+                closed_batches[symbol][batchnum]['SB_avg']             = index_dict[symbol]['SB_avg']
+                closed_batches[symbol][batchnum]['p&l_batch']          = index_dict[symbol]['p&l_batch']
+                closed_batches[symbol][batchnum]['p&l ticker']         = index_dict[symbol]['p&l_ticker']
+                '''
+                sk = f"{symbol}_{batchnum}"
+                closed_batches[sk] = {}
+                closed_batches[sk]['symbol'] = symbol
+                closed_batches[sk]['current_status']     = index_dict[symbol]['current_status']
+                closed_batches[sk]['batch_number']       = index_dict[symbol]['batch_number']
+                closed_batches[sk]['batch_dateopen']     = index_dict[symbol]['batch_dateopen']
+                closed_batches[sk]['batch_dateclosed']   = index_dict[symbol]['batch_dateclosed']
+                #closed_batches[sk]['batch_lot']          = index_dict[symbol]['batch_lot']
+                closed_batches[sk]['qty']           = index_dict[symbol]['qty_buys']
+                #closed_batches[sk]['qty_sells']          = index_dict[symbol]['qty_sells']
+                #closed_batches[sk]['qty_net']            = index_dict[symbol]['qty_net']
+                closed_batches[sk]['amount_buys']        = index_dict[symbol]['amount_buys']
+                closed_batches[sk]['amount_sells']       = index_dict[symbol]['amount_sells']
+                #closed_batches[sk]['amount_net']         = index_dict[symbol]['amount_net']
+                closed_batches[sk]['CB_avg']           = index_dict[symbol]['CB_batch']
+                #closed_batches[sk]['CB_effective']       = index_dict[symbol]['CB_effective']
+                closed_batches[sk]['SB_avg']             = index_dict[symbol]['SB_avg']
+                closed_batches[sk]['p&l_batch']          = index_dict[symbol]['p&l_batch']
+                closed_batches[sk]['p&l ticker']         = index_dict[symbol]['p&l_ticker']
+                
+                #del index_dict[symbol]
     
     dfx = pd.DataFrame.from_dict(index_dict)
     output_df = dfx.transpose()
@@ -294,8 +342,15 @@ def batch_calculations(x):
     output_df.reset_index(drop=True,inplace=True)
 
     annotated_ledger = pd.DataFrame.from_dict(ledger)
+
+    dfx2 = pd.DataFrame.from_dict(closed_batches)
+    output_df2 = dfx2.transpose()
+    output_df2.reset_index(inplace=True)
+    #output_df2.rename(columns={'index':'symbol'},inplace=True)
+    #output_df2.sort_values(by=['symbol', 'batchnum'],inplace=True)
+    #output_df2.reset_index(drop=True,inplace=True)
     
-    return output_df,annotated_ledger
+    return output_df,annotated_ledger,output_df2
 
 def output_to_csv(dataframe,filename):
     #filename='portfolio-batches'
@@ -304,10 +359,9 @@ def output_to_csv(dataframe,filename):
 
 if __name__ == "__main__":
     df = read_transactions()
-    output_df,annotated_ledger = batch_calculations(df)
-    output_to_csv(output_df,'portfolio-batches')
-    
+    output_df,annotated_ledger,output_df2 = batch_calculations(df)
+    output_to_csv(output_df,'current-batches')
     output_to_csv(annotated_ledger,'annotated-ledger')
-    
+    output_to_csv(output_df2,'prior-batches')
 else:
     pass
